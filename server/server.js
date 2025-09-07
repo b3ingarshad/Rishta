@@ -10,9 +10,20 @@ const app = express();
 // Middleware 
 app.use(express.static(path.join(__dirname, 'build')));
 
-app.use(cors({ origin: ['https://rishta-ochre.vercel.app', 'http://localhost:3000'] }));
+app.use(cors({
+  origin: [
+    'https://rishta-b7de.vercel.app', // Your NEW live Vercel frontend
+    'https://rishta-ochre.vercel.app', // Your old URL (keep it if you still use it)
+    'http://localhost:3000' // Your local frontend for development
+  ]
+}));
 app.use(express.json());
-
+app.use((req, res, next) => {
+  if (req.headers.host.slice(0, 4) !== 'www.') {
+    res.redirect(301, 'https://www.' + req.headers.host + req.originalUrl);
+  }
+  next();
+});
 // Database connection
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
