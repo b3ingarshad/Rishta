@@ -82,7 +82,7 @@ const UserTable = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/api/users`);
+      const res = await axios.get(`${API_BASE}api/users`);
       setUsers(res.data);
     } catch {
       toast.error("Failed to fetch users");
@@ -145,10 +145,10 @@ const UserTable = () => {
 
     try {
       if (editingUserId) {
-        await axios.put(`${API_BASE}/api/users/${editingUserId}`, newUser);
+        await axios.put(`${API_BASE}api/users/${editingUserId}`, newUser);
         toast.success("User updated successfully!");
       } else {
-        await axios.post(`${API_BASE}/api/users`, newUser);
+        await axios.post(`${API_BASE}api/users`, newUser);
         toast.success("User added successfully!");
       }
       fetchUsers();
@@ -161,7 +161,7 @@ const UserTable = () => {
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      await axios.delete(`${API_BASE}/api/users/${id}`);
+      await axios.delete(`${API_BASE}api/users/${id}`);
       toast.success("User deleted successfully!");
       fetchUsers();
     } catch {
