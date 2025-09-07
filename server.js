@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 
 // Middleware 
-app.use(cors({ origin: ['https://your-app-name.vercel.app', 'http://localhost:3000'] }));
+app.use(cors({ origin: ['https://network-rishtaforyou.onrender.com', 'http://localhost:3000'] }));
 app.use(express.json());
 
 // Database connection
