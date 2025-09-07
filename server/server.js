@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 
 // Middleware 
-app.use(cors({ origin: ['https://rishta-ochre.vercel.app', 'http://localhost:3000'],
+app.use(cors({ origin: ['https://rishta-b7de.vercel.app','https://rishta-ochre.vercel.app', 'http://localhost:3000'],
   methods: 'GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, PROPFIND',
   credentials: true
  }));
