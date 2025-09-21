@@ -130,6 +130,10 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
 
     const referralId = await generateReferralId();
 
+    // Upload photos to Cloudinary
+    const aadharUpload = files.aadharPhoto ? await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' }) : null;
+    const panUpload = files.panPhoto ? await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' }) : null;
+
     const user = new User({
       fullName: data.fullName,
       dob: data.dob ? new Date(data.dob) : null,
@@ -142,8 +146,8 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
       pinCode: data.pinCode,
       aadharNumber: data.aadharNumber,
       panNumber: data.panNumber,
-      aadharPhoto: files.aadharPhoto ? files.aadharPhoto[0].path : "",
-      panPhoto: files.panPhoto ? files.panPhoto[0].path : "",
+      aadharPhoto: aadharUpload ? aadharUpload.secure_url : "",
+      panPhoto: panUpload ? panUpload.secure_url : "",
       email: data.email.toLowerCase(),
       password: hashed,
       education: data.education,
@@ -195,7 +199,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin Add User API
+// ------------------ Admin Add User ------------------
 router.post('/admin/add-user', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
   try {
     const data = req.body;
@@ -205,23 +209,21 @@ router.post('/admin/add-user', upload.fields([{ name: 'aadharPhoto' }, { name: '
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    // Check if email already exists
     const existingEmail = await User.findOne({ email: data.email.toLowerCase() });
     if (existingEmail) return res.status(400).json({ message: 'Email already registered' });
 
-    // Check if mobile already exists
     const existingMobile = await User.findOne({ mobile: data.mobile });
     if (existingMobile) return res.status(400).json({ message: 'Mobile number already registered' });
 
-    // Auto-generate password (8 characters)
-    const autoPassword = crypto.randomBytes(4).toString('hex'); // 8 length
+    const autoPassword = crypto.randomBytes(4).toString('hex');
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(autoPassword, salt);
 
-    // Generate referral ID
     const referralId = await generateReferralId();
 
-    // Create new user
+    const aadharUpload = files.aadharPhoto ? await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' }) : null;
+    const panUpload = files.panPhoto ? await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' }) : null;
+
     const user = new User({
       fullName: data.fullName,
       dob: data.dob ? new Date(data.dob) : null,
@@ -234,8 +236,8 @@ router.post('/admin/add-user', upload.fields([{ name: 'aadharPhoto' }, { name: '
       pinCode: data.pinCode,
       aadharNumber: data.aadharNumber,
       panNumber: data.panNumber,
-      aadharPhoto: files.aadharPhoto ? files.aadharPhoto[0].path : "",
-      panPhoto: files.panPhoto ? files.panPhoto[0].path : "",
+      aadharPhoto: aadharUpload ? aadharUpload.secure_url : "",
+      panPhoto: panUpload ? panUpload.secure_url : "",
       email: data.email.toLowerCase(),
       password: hashed,
       education: data.education,
@@ -247,10 +249,9 @@ router.post('/admin/add-user', upload.fields([{ name: 'aadharPhoto' }, { name: '
       sponsorName: "Rishta Matrimonial",
       referredBy: "REFRM11RM1R"
     });
-  
+
     await user.save();
 
-    // Send email with credentials
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: data.email,
@@ -265,7 +266,7 @@ router.post('/admin/add-user', upload.fields([{ name: 'aadharPhoto' }, { name: '
   }
 });
 
-// PUT - Edit User
+// ------------------ Edit User ------------------
 router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
   try {
     const userId = req.params.id;
@@ -275,7 +276,6 @@ router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { nam
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Check if email/mobile is already used by someone else
     if (data.email) {
       const existingEmail = await User.findOne({ email: data.email.toLowerCase(), _id: { $ne: userId } });
       if (existingEmail) return res.status(400).json({ message: 'Email already in use' });
@@ -285,7 +285,6 @@ router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { nam
       if (existingMobile) return res.status(400).json({ message: 'Mobile already in use' });
     }
 
-    // Update fields
     user.fullName = data.fullName || user.fullName;
     user.dob = data.dob ? new Date(data.dob) : user.dob;
     user.gender = data.gender || user.gender;
@@ -297,16 +296,13 @@ router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { nam
     user.pinCode = data.pinCode || user.pinCode;
     user.aadharNumber = data.aadharNumber || user.aadharNumber;
     user.panNumber = data.panNumber || user.panNumber;
-    user.aadharPhoto = files.aadharPhoto ? files.aadharPhoto[0].path : user.aadharPhoto;
-    user.panPhoto = files.panPhoto ? files.panPhoto[0].path : user.panPhoto;
+    user.aadharPhoto = files.aadharPhoto ? (await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' })).secure_url : user.aadharPhoto;
+    user.panPhoto = files.panPhoto ? (await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' })).secure_url : user.panPhoto;
     user.email = data.email ? data.email.toLowerCase() : user.email;
     user.education = data.education || user.education;
     user.profession = data.profession || user.profession;
     user.nomineeName = data.nomineeName || user.nomineeName;
     user.nomineeRelation = data.nomineeRelation || user.nomineeRelation;
-
-    // Referral & Sponsor remain unchanged unless provided
-    user.referralId = user.referralId || (await generateReferralId());
     user.sponsorName = data.sponsorName || user.sponsorName || "Rishta Matrimonial";
     user.referredBy = data.referredBy || user.referredBy || "REFRM11RM1R";
 
