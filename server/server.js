@@ -4,13 +4,8 @@ const cors = require('cors');
 const connectDB = require('./src/config/db');
 
 const app = express();
-const allowedOrigins = [
-  'https://rishta-b7de.vercel.app',
-  'https://rishta-ochre.vercel.app',
-  'http://localhost:3000'
-];
 app.use(express.json());
-app.use(cors({ origin: ['https://rishta-b7de.vercel.app','https://rishta-ochre.vercel.app', 'http://localhost:3000'],
+app.use(cors({ origin: ['https://rishta-lake.vercel.app', 'http://localhost:3000'],
   methods: 'GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, PROPFIND',
   credentials: true
  }));
