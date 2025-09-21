@@ -1,9 +1,9 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "components/navbar";
-import Sidebar from "components/sidebar";
 import Footer from "components/footer/Footer";
-import routes from "routes.js";
+import { adminRoutes } from "routes.js"; // ✅ sirf adminRoutes import
+import Sidebar from "components/sidebar";
 
 export default function Admin(props) {
   const { ...rest } = props;
@@ -16,8 +16,9 @@ export default function Admin(props) {
       window.innerWidth < 1200 ? setOpen(false) : setOpen(true)
     );
   }, []);
+
   React.useEffect(() => {
-    getActiveRoute(routes);
+    getActiveRoute(adminRoutes); // ✅ yahan adminRoutes pass kiya
   }, [location.pathname]);
 
   const getActiveRoute = (routes) => {
@@ -33,6 +34,7 @@ export default function Admin(props) {
     }
     return activeRoute;
   };
+
   const getActiveNavbar = (routes) => {
     let activeNavbar = false;
     for (let i = 0; i < routes.length; i++) {
@@ -44,11 +46,12 @@ export default function Admin(props) {
     }
     return activeNavbar;
   };
+
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
       if (prop.layout === "/admin") {
         return (
-          <Route path={`/${prop.path}`} element={prop.component} key={key} />
+          <Route path={`/${prop.path}`} element={<prop.component />} key={key} />
         );
       } else {
         return null;
@@ -59,7 +62,7 @@ export default function Admin(props) {
   document.documentElement.dir = "ltr";
   return (
     <div className="flex h-full w-full">
-      <Sidebar open={open} onClose={() => setOpen(false)} />
+      <Sidebar open={open} onClose={() => setOpen(false)} routes={adminRoutes} />
       {/* Navbar & Main Content */}
       <div className="h-full w-full bg-lightPrimary dark:!bg-navy-900">
         {/* Main Content */}
@@ -72,12 +75,12 @@ export default function Admin(props) {
               onOpenSidenav={() => setOpen(true)}
               logoText={"Horizon UI Tailwind React"}
               brandText={currentRoute}
-              secondary={getActiveNavbar(routes)}
+              secondary={getActiveNavbar(adminRoutes)} 
               {...rest}
             />
             <div className="pt-5s mx-auto mb-auto h-full min-h-[84vh] p-2 md:pr-2">
               <Routes>
-                {getRoutes(routes)}
+                {getRoutes(adminRoutes)}
 
                 <Route
                   path="/"

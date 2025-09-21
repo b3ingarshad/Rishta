@@ -6,3 +6,6 @@ body {
 option {
 	color: black;
 }
+#dob{
+	justify-content: left !important;
+}

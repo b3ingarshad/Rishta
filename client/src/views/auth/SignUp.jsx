@@ -1,93 +1,503 @@
-import React, { useState } from "react";
-import InputField from "components/fields/InputField";
-import Checkbox from "components/checkbox";
-import { useAuth } from "../../AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import InputField from "../../components/fields/InputField";
+import TextField from "../../components/fields/TextField";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import { useLocation } from "react-router-dom";
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 
 export default function SignUp() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    dob: "",
+    gender: "",
+    mobile: "",
+    address: "",
+    country: "India",
+    city: "",
+    state: "",
+    pinCode: "",
+    aadharNumber: "",
+    panNumber: "",
+    aadharPhoto: null,
+    panPhoto: null,
+    education: "",
+    profession: "",
+    nomineeName: "",
+    nomineeRelation: "",
+    referralCode: "",
+    sponsorName: "",
+    terms: false,
+    ageCheck: false,
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    console.log(email, password,"email, password");
-    
-    const success = await signup({ email, password });
-    if (!success) {
-      setError("Failed to create account. Try again.");
+  const [error, setError] = useState({});
+  const [locationLocked, setLocationLocked] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  // Generic change handler
+  const handleChange = (e) => {
+    const { id, value, type, checked, files } = e.target;
+    if (type === "checkbox") {
+      setForm((prev) => ({ ...prev, [id]: checked }));
+    } else if (type === "file") {
+      setForm((prev) => ({ ...prev, [id]: files[0] })); // only first file
     } else {
-      setError("");
-      navigate("/auth/sign-in"); // Redirect to sign in after successful signup
+      setForm((prev) => ({ ...prev, [id]: value }));
     }
   };
 
+  // Email verification request
+  const handleEmailVerification = async () => {
+    if (!form.email) {
+      toast.error("Please enter email first");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}api/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // If email not found
+        if (res.status === 404) {
+          throw new Error("Email address not found");
+        } else {
+          throw new Error(data.message || "Failed to send OTP");
+        }
+      }
+
+      toast.success("Verification email sent. Please check your inbox!");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+
+  const handleOTPVerification = async () => {
+    const otp = prompt("Enter OTP sent to your email:");
+    if (!otp) return;
+    try {
+      const res = await fetch(`${API_BASE}api/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      toast.success("Email verified successfully!");
+      setEmailVerified(true);
+    } catch (err) {
+      toast.error(err.message || "Invalid OTP");
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const referralId = params.get("referralId");
+    if (referralId) {
+      setForm((prev) => ({ ...prev, referralCode: referralId }));
+      // Automatically fetch sponsor name
+      fetchSponsorName(referralId);
+    }
+  }, [location.search]);
+
+  const fetchSponsorName = async (referralCode) => {
+    try {
+      const res = await fetch(`${API_BASE}api/auth/get-sponsor/${referralCode}`);
+      if (!res.ok) throw new Error("Invalid Referral Code");
+      const data = await res.json();
+      setForm((prev) => ({ ...prev, sponsorName: data.sponsorName }));
+      setError((prev) => ({ ...prev, referralCode: "" }));
+    } catch (err) {
+      setForm((prev) => ({ ...prev, sponsorName: "" }));
+      setError((prev) => ({ ...prev, referralCode: "Invalid Referral Code" }));
+    }
+  };
+
+  // Handle Pincode change & autofill state/city
+  // Handle Pincode change & autofill state/city
+  const handlePincodeChange = async (e) => {
+    const pinCode = e.target.value;
+    setForm((prev) => ({ ...prev, pinCode }));
+
+    if (pinCode.length === 6) {
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pinCode}`);
+        const data = await res.json();
+
+        if (data[0].Status === "Success") {
+          const state = data[0].PostOffice[0].State;
+          const city = data[0].PostOffice[0].District;
+
+          setForm((prev) => ({
+            ...prev,
+            state,
+            city,
+          }));
+          setLocationLocked(true);
+          toast.success("State & City autofilled!");
+        } else {
+          // Invalid Pincode → Clear state & city
+          setForm((prev) => ({
+            ...prev,
+            state: "",
+            city: "",
+          }));
+          setLocationLocked(false);
+          toast.error("Invalid Pincode");
+        }
+      } catch (err) {
+        console.error(err);
+        // API error → Clear state & city
+        setForm((prev) => ({
+          ...prev,
+          state: "",
+          city: "",
+        }));
+        setLocationLocked(false);
+        toast.error("Failed to fetch location");
+      }
+    } else {
+      // If pincode less than 6 digits → Clear state & city
+      setForm((prev) => ({
+        ...prev,
+        state: "",
+        city: "",
+      }));
+      setLocationLocked(false);
+    }
+  };
+
+  // Referral Code Change Handler
+  const handleReferralChange = async (e) => {
+    const referralCode = e.target.value;
+    setForm((prev) => ({ ...prev, referralCode }));
+
+    if (referralCode.trim() !== "") {
+      try {
+        const res = await fetch(`${API_BASE}api/auth/get-sponsor/${referralCode}`);
+        if (!res.ok) throw new Error("Invalid Referral Code");
+
+        const data = await res.json();
+        setForm((prev) => ({
+          ...prev,
+          sponsorName: data.sponsorName
+        }));
+        setError((prev) => ({ ...prev, referralCode: "" })); // clear error if valid
+      } catch (err) {
+        setForm((prev) => ({ ...prev, sponsorName: "" }));
+        setError((prev) => ({ ...prev, referralCode: "Invalid Referral Code" }));
+      }
+    } else {
+      setForm((prev) => ({ ...prev, sponsorName: "" }));
+    }
+  };
+
+
+  const validateForm = () => {
+    let errors = {};
+
+    if (!form.email) errors.email = "Email is required";
+    if (!emailVerified) errors.email = "Please verify email first";
+    if (!form.password || form.password.length < 8)
+      errors.password = "Password must be at least 8 characters";
+    if (form.password !== form.confirmPassword)
+      errors.confirmPassword = "Passwords do not match";
+    if (!form.fullName) errors.fullName = "Full name is required";
+    if (!form.pinCode) errors.pinCode = "Pin Code is required";
+    if (!form.state) errors.state = "State is required";
+    if (!form.city) errors.city = "City is required";
+
+    if (!form.aadharNumber) errors.aadharNumber = "Aadhar number is required";
+    if (!form.panNumber) errors.panNumber = "PAN number is required";
+
+    if (!form.aadharPhoto) errors.aadharPhoto = "Aadhar photo is required";
+    if (!form.panPhoto) errors.panPhoto = "PAN photo is required";
+
+    if (!form.mobile) errors.mobile = "Mobile number is required";
+    else if (!/^\d{10}$/.test(form.mobile))
+      errors.mobile = "Mobile must be 10 digits";
+
+    if (!form.address) errors.address = "Address is required";
+
+    if (!form.terms) errors.terms = "You must accept terms";
+    if (!form.ageCheck) errors.ageCheck = "You must be at least 18";
+
+    if (!form.gender) errors.gender = "Gender is required";
+    if (!form.dob) {
+    errors.dob = "Date of Birth is required";
+  } else {
+    const dob = new Date(form.dob);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+
+    if (age < 18) errors.dob = "You must be at least 18 years old";
+  }
+
+  // Checkbox validation
+  if (!form.ageCheck) {
+    errors.ageCheck = "You must confirm that you are at least 18 years old";
+  }
+
+    setError(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Default referral if empty
+    if (!form.referralCode) {
+      form.referralCode = "REFRM11RM1R";
+      form.sponsorName = "Rishta Matrimonial";
+    }
+
+    if (!validateForm()) {
+      toast.error("Please fix errors");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      Object.keys(form).forEach((key) => formData.append(key, form[key]));
+
+      await signup(formData);
+      toast.success("Signup successful!");
+      setTimeout(() => navigate("/auth/sign-in"), 2000);
+    } catch (err) {
+      toast.error(err.message || "Signup failed!");
+      setLoading(false);
+    }
+  };
+
+  // Helper to show error below inputs
+  const renderError = (field) =>
+    error[field] && <small className="text-red-500">{error[field]}</small>;
+
   return (
-    <div className="mt-16 mb-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
-      <div className="mt-[10vh] w-full max-w-full flex-col items-center md:pl-4 lg:pl-0 xl:max-w-[420px]">
-        <h4 className="mb-4 text-4xl font-bold text-navy-700 dark:text-white">Sign Up</h4>
+    <div className="mt-10 mb-10 flex h-full w-full items-center justify-center px-2">
+      <ToastContainer />
+      <div className="mt-[5vh] w-full max-w-full flex-col items-center xl:max-w-[50%]">
+        <h4 className="mb-4 text-4xl font-bold text-navy-700 dark:text-white">
+          Sign Up
+        </h4>
         <p className="mb-8 text-base text-gray-600 dark:text-gray-300">
           Create your account by filling the form below.
         </p>
 
-        <form onSubmit={handleSubmit} className="w-full">
-          <InputField
-            variant="auth"
-            extra="mb-4"
-            label="Email*"
-            placeholder="mail@simmmple.com"
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <InputField
-            variant="auth"
-            extra="mb-4"
-            label="Password*"
-            placeholder="Min. 8 characters"
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <InputField
-            variant="auth"
-            extra="mb-4"
-            label="Confirm Password*"
-            placeholder="Re-enter password"
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-          {error && <p className="text-red-500 mb-4">{error}</p>}
+        <form className="w-full" noValidate onSubmit={handleSubmit}>
 
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-brand-500 py-3 text-base font-semibold text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:bg-brand-200"
-          >
-            Sign Up
+          {/* Full Name */}
+          <p className="mb-2 text-base text-gray-600">Personal Details as per KYC Documents*</p>
+          <div className="row gx-3 mb-3">
+            <div className="col-md-12">
+              <InputField id="fullName" label="Full Name (as per Aadhar Card)*" value={form.fullName} onChange={handleChange} />
+              {renderError("fullName")}
+            </div>
+            <div className="col-md-6">
+              <InputField id="aadharNumber" label="Aadhar Card Number*" value={form.aadharNumber} onChange={handleChange} />
+              {renderError("aadharNumber")}
+            </div>
+            <div className="col-md-6">
+              <InputField
+                id="aadharPhoto"
+                label="Aadhar Photo*"
+                value={form.aadharPhoto}
+                onChange={handleChange}
+                type="file"
+              />
+
+              {renderError("aadharPhoto")}
+            </div>
+            <div className="col-md-6">
+              <InputField id="panNumber" label="PAN Number*" value={form.panNumber} onChange={handleChange} />
+              {renderError("panNumber")}
+            </div>
+            <div className="col-md-6">
+              <InputField
+                id="panPhoto"
+                label="PAN Photo*"
+                value={form.panPhoto}
+                onChange={handleChange}
+                type="file"
+              />
+
+              {renderError("panPhoto")}
+            </div>
+          </div>
+
+          {/* Gender & DOB */}
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <select
+                id="gender"
+                className="form-control"
+                value={form.gender}
+                onChange={handleChange}
+              >
+                <option value="">Select Gender*</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+              {renderError("gender")}
+            </div>
+
+            <div className="col-md-6">
+              <InputField
+                id="dob"
+                type="date"
+                label="Date of Birth*"
+                value={form.dob}
+                onChange={handleChange}
+              />
+              {renderError("dob")}
+            </div>
+          </div>
+
+
+          {/* Country & Pin */}
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField id="country" label="Country*" value={form.country} disabled />
+            </div>
+            <div className="col-md-6">
+              <InputField id="pinCode" label="Pin Code*" value={form.pinCode} onChange={handlePincodeChange} />
+              {renderError("pinCode")}
+            </div>
+          </div>
+
+          {/* State & City */}
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField id="state" label="State*" value={form.state} disabled={locationLocked} />
+              {renderError("state")}
+            </div>
+            <div className="col-md-6">
+              <InputField id="city" label="City*" value={form.city} disabled={locationLocked} />
+              {renderError("city")}
+            </div>
+          </div>
+
+          {/* Mobile & Email */}
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField id="mobile" label="Mobile*" value={form.mobile} onChange={handleChange} />
+              {renderError("mobile")}
+            </div>
+            <div className="col-md-6">
+              <div className="flex gap-2">
+                <InputField id="email" label="Email*" value={form.email} onChange={handleChange} />
+                <button type="button" onClick={handleEmailVerification} className="bg-blue-500 text-white p-2 rounded">Send OTP</button>
+                <button type="button" onClick={handleOTPVerification} className="bg-green-500 text-white p-2 rounded">Verify OTP</button>
+              </div>
+              {renderError("email")}
+            </div>
+          </div>
+
+          {/* Passwords */}
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField id="password" label="Password*" type="password" value={form.password} onChange={handleChange} />
+              {renderError("password")}
+            </div>
+            <div className="col-md-6">
+              <InputField id="confirmPassword" label="Confirm Password*" type="password" value={form.confirmPassword} onChange={handleChange} />
+              {renderError("confirmPassword")}
+            </div>
+          </div>
+
+          {/* Address */}
+          <div className="row gx-3 mb-3">
+            <div className="col-12">
+              <TextField id="address" label="Address*" value={form.address} onChange={handleChange} />
+              {renderError("address")}
+            </div>
+          </div>
+
+
+
+
+          {/* Additional */}
+          <p className="mb-2 text-base text-gray-600">Additional Details*</p>
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField id="education" label="Education" value={form.education} onChange={handleChange} />
+            </div>
+            <div className="col-md-6">
+              <InputField id="profession" label="Profession" value={form.profession} onChange={handleChange} />
+            </div>
+          </div>
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField id="nomineeName" label="Nominee Name*" value={form.nomineeName} onChange={handleChange} />
+              {renderError("nomineeName")}
+            </div>
+            <div className="col-md-6">
+              <InputField id="nomineeRelation" label="Nominee Relation*" value={form.nomineeRelation} onChange={handleChange} />
+              {renderError("nomineeRelation")}
+            </div>
+          </div>
+
+          {/* Referral */}
+          <p className="mb-2 text-base text-gray-600">Referral Code*</p>
+          <div className="row gx-3 mb-3">
+            <div className="col-md-6">
+              <InputField
+                id="referralCode"
+                label="Referral Code"
+                value={form.referralCode}
+                onChange={handleReferralChange}
+              />
+              {renderError("referralCode")}
+            </div>
+            <div className="col-md-6">
+              <InputField
+                id="sponsorName"
+                label="Sponsor Name"
+                value={form.sponsorName}
+                disabled
+              />
+              {renderError("sponsorName")}
+            </div>
+          </div>
+
+
+          {/* Terms */}
+          <div className="form-check mb-2">
+            <input className="form-check-input" type="checkbox" id="terms" checked={form.terms} onChange={handleChange} />
+            <label className="form-check-label" htmlFor="terms">I agree to the Terms and Conditions</label>
+            {renderError("terms")}
+          </div>
+          <div className="form-check mb-2">
+            <input className="form-check-input" type="checkbox" id="ageCheck" checked={form.ageCheck} onChange={handleChange} />
+            <label className="form-check-label" htmlFor="ageCheck">I am at least 18 years old</label>
+            {renderError("ageCheck")}
+          </div>
+
+          <button type="submit" disabled={loading} className={`w-full py-2 mt-2 rounded-lg text-white font-medium ${loading ? "bg-gray-400" : "bg-[#75B61A] hover:bg-green-600"}`}>
+
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
-
-        <div className="mt-6 flex text-sm font-medium text-navy-700 dark:text-gray-400">
-          <span>Already have an account?</span>
-          <Link to="/auth/sign-in" className="ml-1 text-brand-500 hover:text-brand-600 dark:text-white">
-            Sign In
-          </Link>
-        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 import React from "react";
 
 function InputField(props) {
-  const { label, id, extra, placeholder, cols, rows, state, disabled } = props;
+  const { label,value,onChange, id, extra, placeholder, cols, rows, state, disabled } = props;
 
   return (
     <div className={`${extra}`}>
@@ -15,6 +15,8 @@ function InputField(props) {
       <div>
         <textarea
           cols={cols}
+             value={value}       // controlled value here
+        onChange={onChange}
           rows={rows}
           placeholder={placeholder}
           className={`flex w-full items-center justify-center rounded-xl border bg-white/0 pl-3 pt-3 text-sm outline-none ${

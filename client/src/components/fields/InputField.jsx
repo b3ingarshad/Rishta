@@ -9,7 +9,8 @@ function InputField(props) {
     state, 
     disabled,
     value,        // new: controlled value
-    onChange      // new: change handler
+    onChange,
+    
   } = props;
 
   return (
@@ -27,7 +28,7 @@ function InputField(props) {
         type={type}
         id={id}
         placeholder={placeholder}
-        value={value}       // controlled value here
+       value={type === "file" ? undefined : value}      // controlled value here
         onChange={onChange} // change handler here
         className={`mt-2 flex h-12 w-full items-center justify-center rounded-xl border bg-white/0 p-3 text-sm outline-none ${
           disabled === true
