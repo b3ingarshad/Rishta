@@ -200,32 +200,44 @@ router.post('/login', async (req, res) => {
 });
 
 // ------------------ Admin Add User ------------------
-router.post(  
+router.post(
   '/admin/add-user',
   upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]),
   async (req, res) => {
-    console.log(res.body,"body")
-    console.log(res.files,"files")
     try {
+      // ------------------ Debug Logs ------------------
+      console.log("REQ BODY:", req.body);
+      console.log("REQ FILES:", req.files);
+
       const data = req.body;
       const files = req.files;
 
       // ------------------ Required Fields ------------------
       if (!data.email || !data.fullName || !data.aadharNumber) {
+        console.warn("Missing required fields");
         return res.status(400).json({ message: "Full Name, Email & Aadhar are required" });
       }
 
       // ------------------ Check Existing Email/Mobile ------------------
+      console.log("Checking existing email...");
       const existingEmail = await User.findOne({ email: data.email.toLowerCase() });
-      if (existingEmail) return res.status(400).json({ message: 'Email already registered' });
+      if (existingEmail) {
+        console.warn("Email already registered");
+        return res.status(400).json({ message: 'Email already registered' });
+      }
 
+      console.log("Checking existing mobile...");
       const existingMobile = await User.findOne({ mobile: data.mobile });
-      if (existingMobile) return res.status(400).json({ message: 'Mobile number already registered' });
+      if (existingMobile) {
+        console.warn("Mobile already registered");
+        return res.status(400).json({ message: 'Mobile number already registered' });
+      }
 
       // ------------------ Auto Password ------------------
       const autoPassword = crypto.randomBytes(4).toString('hex');
       const salt = await bcrypt.genSalt(10);
       const hashed = await bcrypt.hash(autoPassword, salt);
+      console.log("Generated auto password (hashed)");
 
       // ------------------ Generate Referral ID ------------------
       const generateReferralId = async () => {
@@ -243,10 +255,12 @@ router.post(
       };
 
       const referralId = await generateReferralId();
+      console.log("Generated referral ID:", referralId);
 
-      // ------------------ Cloudinary Upload (already handled by multer-storage-cloudinary) ------------------
-          const aadharPhotoUrl = files.aadharPhoto ? files.aadharPhoto[0].path : "";
+      // ------------------ Cloudinary Upload ------------------
+      const aadharPhotoUrl = files.aadharPhoto ? files.aadharPhoto[0].path : "";
       const panPhotoUrl = files.panPhoto ? files.panPhoto[0].path : "";
+      console.log("Uploaded files:", aadharPhotoUrl, panPhotoUrl);
 
       // ------------------ Create User ------------------
       const user = new User({
@@ -276,6 +290,7 @@ router.post(
       });
 
       await user.save();
+      console.log("User saved successfully");
 
       // ------------------ Optional Email Sending ------------------
       try {
@@ -286,18 +301,26 @@ router.post(
             subject: 'Your Account Details',
             text: `Hello ${data.fullName},\n\nYour account has been created successfully.\n\nEmail: ${data.email}\nPassword: ${autoPassword}\n\nPlease change your password after login.`
           });
+          console.log("Email sent successfully");
         }
       } catch (emailErr) {
         console.warn("Email not sent:", emailErr.message);
       }
 
       res.status(201).json({ message: "User created successfully", autoPassword });
+
     } catch (err) {
-      console.error("Error in /admin/add-user:", err);
-      res.status(500).json({ message: 'Server error', error: err.message });
+      console.error("Error in /admin/add-user:", err.message);
+      console.error(err.stack);
+      res.status(500).json({
+        message: 'Server error',
+        error: err.message,
+        stack: err.stack
+      });
     }
   }
 );
+
 
 
 // ------------------ Edit User ------------------
