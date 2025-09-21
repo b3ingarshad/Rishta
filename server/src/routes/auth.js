@@ -200,11 +200,12 @@ router.post('/login', async (req, res) => {
 });
 
 // ------------------ Admin Add User ------------------
-// ------------------ Admin Add User ------------------
-router.post(
+router.post(  
   '/admin/add-user',
   upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]),
   async (req, res) => {
+    console.log(res.body,"body")
+    console.log(res.files,"files")
     try {
       const data = req.body;
       const files = req.files;
