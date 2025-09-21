@@ -6,21 +6,20 @@ const nodemailer = require('nodemailer');
 const multer = require('multer');
 const User = require('../models/User');
 const crypto = require('crypto');
-const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'rishta-users',
-    allowedFormats: ['jpg', 'png'],
-    transformation: [{ width: 500, height: 500, crop: 'limit' }],
+    allowed_formats: ['jpg', 'png', 'jpeg'],
   },
 });
 
