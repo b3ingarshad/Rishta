@@ -15,15 +15,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'rishta-users',
-    allowed_formats: ['jpg', 'png', 'jpeg'],
-  },
+const upload = multer({
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: {
+      folder: 'rishta-users',
+      allowed_formats: ['jpg', 'png', 'jpeg'],
+    },
+  }),
 });
 
-const upload = multer({ storage });
 
 // ------------------ Nodemailer Config ------------------
 const transporter = nodemailer.createTransport({
@@ -243,8 +244,8 @@ router.post(
       const referralId = await generateReferralId();
 
       // ------------------ Cloudinary Upload (already handled by multer-storage-cloudinary) ------------------
-      const aadharUpload = files.aadharPhoto ? files.aadharPhoto[0].path : "";
-      const panUpload = files.panPhoto ? files.panPhoto[0].path : "";
+          const aadharPhotoUrl = files.aadharPhoto ? files.aadharPhoto[0].path : "";
+      const panPhotoUrl = files.panPhoto ? files.panPhoto[0].path : "";
 
       // ------------------ Create User ------------------
       const user = new User({
@@ -259,8 +260,8 @@ router.post(
         pinCode: data.pinCode,
         aadharNumber: data.aadharNumber,
         panNumber: data.panNumber,
-        aadharPhoto: aadharUpload,
-        panPhoto: panUpload,
+        aadharPhoto: aadharPhotoUrl,
+        panPhoto: panPhotoUrl,
         email: data.email.toLowerCase(),
         password: hashed,
         education: data.education,
