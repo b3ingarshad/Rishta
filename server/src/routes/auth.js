@@ -15,15 +15,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const upload = multer({
-  storage: new CloudinaryStorage({
-    cloudinary,
-    params: {
-      folder: 'rishta-users',
-      allowed_formats: ['jpg', 'png', 'jpeg'],
-    },
-  }),
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'rishta-users',
+    allowed_formats: ['jpg', 'png', 'jpeg']
+  }
 });
+
+const upload = multer({ storage });
 
 
 // ------------------ Nodemailer Config ------------------
@@ -58,11 +58,8 @@ router.post('/send-otp', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email required" });
 
-  
-
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) return res.status(400).json({ message: 'Email already registered' });
-
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -75,13 +72,11 @@ router.post('/send-otp', async (req, res) => {
       subject: 'Your OTP',
       text: `Your OTP is: ${otp}`
     });
-
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
     res.status(500).json({ message: "Failed to send OTP", error: err.message });
   }
 });
-
 
 router.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
@@ -93,7 +88,6 @@ router.post('/verify-otp', async (req, res) => {
     res.status(400).json({ message: "Invalid OTP" });
   }
 });
-
 
 // ------------------ Get Sponsor Name ------------------
 router.get("/get-sponsor/:referralCode", async (req, res) => {
@@ -131,8 +125,8 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
     const referralId = await generateReferralId();
 
     // Upload photos to Cloudinary
-    const aadharUpload = files.aadharPhoto ? await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' }) : null;
-    const panUpload = files.panPhoto ? await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' }) : null;
+    // const aadharUpload = files.aadharPhoto ? await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' }) : null;
+    // const panUpload = files.panPhoto ? await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' }) : null;
 
     const user = new User({
       fullName: data.fullName,
@@ -146,8 +140,8 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
       pinCode: data.pinCode,
       aadharNumber: data.aadharNumber,
       panNumber: data.panNumber,
-      aadharPhoto: aadharUpload ? aadharUpload.secure_url : "",
-      panPhoto: panUpload ? panUpload.secure_url : "",
+        aadharPhoto: files?.aadharPhoto?.[0]?.path || "",
+      panPhoto: files?.panPhoto?.[0]?.path || "",
       email: data.email.toLowerCase(),
       password: hashed,
       education: data.education,
@@ -258,9 +252,9 @@ router.post(
       console.log("Generated referral ID:", referralId);
 
       // ------------------ Cloudinary Upload ------------------
-      const aadharPhotoUrl = files.aadharPhoto ? files.aadharPhoto[0].path : "";
-      const panPhotoUrl = files.panPhoto ? files.panPhoto[0].path : "";
-      console.log("Uploaded files:", aadharPhotoUrl, panPhotoUrl);
+      // const aadharPhotoUrl = files.aadharPhoto ? files.aadharPhoto[0].path : "";
+      // const panPhotoUrl = files.panPhoto ? files.panPhoto[0].path : "";
+      // console.log("Uploaded files:", aadharPhotoUrl, panPhotoUrl);
 
       // ------------------ Create User ------------------
       const user = new User({
@@ -275,8 +269,8 @@ router.post(
         pinCode: data.pinCode,
         aadharNumber: data.aadharNumber,
         panNumber: data.panNumber,
-        aadharPhoto: aadharPhotoUrl,
-        panPhoto: panPhotoUrl,
+         aadharPhoto: files?.aadharPhoto?.[0]?.path || "",
+      panPhoto: files?.panPhoto?.[0]?.path || "",
         email: data.email.toLowerCase(),
         password: hashed,
         education: data.education,
@@ -321,8 +315,6 @@ router.post(
   }
 );
 
-
-
 // ------------------ Edit User ------------------
 router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
   try {
@@ -333,42 +325,42 @@ router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { nam
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (data.email) {
-      const existingEmail = await User.findOne({ email: data.email.toLowerCase(), _id: { $ne: userId } });
-      if (existingEmail) return res.status(400).json({ message: 'Email already in use' });
-    }
-    if (data.mobile) {
-      const existingMobile = await User.findOne({ mobile: data.mobile, _id: { $ne: userId } });
-      if (existingMobile) return res.status(400).json({ message: 'Mobile already in use' });
-    }
+    if (data.email && await User.findOne({ email: data.email.toLowerCase(), _id: { $ne: userId } }))
+      return res.status(400).json({ message: 'Email already in use' });
 
-    user.fullName = data.fullName || user.fullName;
-    user.dob = data.dob ? new Date(data.dob) : user.dob;
-    user.gender = data.gender || user.gender;
-    user.mobile = data.mobile || user.mobile;
-    user.address = data.address || user.address;
-    user.country = data.country || user.country;
-    user.city = data.city || user.city;
-    user.state = data.state || user.state;
-    user.pinCode = data.pinCode || user.pinCode;
-    user.aadharNumber = data.aadharNumber || user.aadharNumber;
-    user.panNumber = data.panNumber || user.panNumber;
-    user.aadharPhoto = files.aadharPhoto ? (await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' })).secure_url : user.aadharPhoto;
-    user.panPhoto = files.panPhoto ? (await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' })).secure_url : user.panPhoto;
-    user.email = data.email ? data.email.toLowerCase() : user.email;
-    user.education = data.education || user.education;
-    user.profession = data.profession || user.profession;
-    user.nomineeName = data.nomineeName || user.nomineeName;
-    user.nomineeRelation = data.nomineeRelation || user.nomineeRelation;
-    user.sponsorName = data.sponsorName || user.sponsorName || "Rishta Matrimonial";
-    user.referredBy = data.referredBy || user.referredBy || "REFRM11RM1R";
+    if (data.mobile && await User.findOne({ mobile: data.mobile, _id: { $ne: userId } }))
+      return res.status(400).json({ message: 'Mobile already in use' });
+
+    Object.assign(user, {
+      fullName: data.fullName || user.fullName,
+      dob: data.dob ? new Date(data.dob) : user.dob,
+      gender: data.gender || user.gender,
+      mobile: data.mobile || user.mobile,
+      address: data.address || user.address,
+      country: data.country || user.country,
+      city: data.city || user.city,
+      state: data.state || user.state,
+      pinCode: data.pinCode || user.pinCode,
+      aadharNumber: data.aadharNumber || user.aadharNumber,
+      panNumber: data.panNumber || user.panNumber,
+      aadharPhoto: files?.aadharPhoto?.[0]?.path || user.aadharPhoto,
+      panPhoto: files?.panPhoto?.[0]?.path || user.panPhoto,
+      email: data.email ? data.email.toLowerCase() : user.email,
+      education: data.education || user.education,
+      profession: data.profession || user.profession,
+      nomineeName: data.nomineeName || user.nomineeName,
+      nomineeRelation: data.nomineeRelation || user.nomineeRelation,
+      sponsorName: data.sponsorName || user.sponsorName || "Rishta Matrimonial",
+      referredBy: data.referredBy || user.referredBy || "REFRM11RM1R"
+    });
 
     await user.save();
     res.json({ message: "User updated successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("Edit User Error:", err.message);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-  
+
+
 module.exports = router;
