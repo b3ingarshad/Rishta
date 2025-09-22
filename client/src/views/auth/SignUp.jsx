@@ -5,7 +5,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { useLocation } from "react-router-dom";
-import { border } from "@chakra-ui/system";
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 
 export default function SignUp() {
@@ -239,21 +238,21 @@ export default function SignUp() {
 
     if (!form.gender) errors.gender = "Gender is required";
     if (!form.dob) {
-      errors.dob = "Date of Birth is required";
-    } else {
-      const dob = new Date(form.dob);
-      const today = new Date();
-      let age = today.getFullYear() - dob.getFullYear();
-      const m = today.getMonth() - dob.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    errors.dob = "Date of Birth is required";
+  } else {
+    const dob = new Date(form.dob);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
 
-      if (age < 18) errors.dob = "You must be at least 18 years old";
-    }
+    if (age < 18) errors.dob = "You must be at least 18 years old";
+  }
 
-    // Checkbox validation
-    if (!form.ageCheck) {
-      errors.ageCheck = "You must confirm that you are at least 18 years old";
-    }
+  // Checkbox validation
+  if (!form.ageCheck) {
+    errors.ageCheck = "You must confirm that you are at least 18 years old";
+  }
 
     setError(errors);
     return Object.keys(errors).length === 0;
@@ -324,8 +323,6 @@ export default function SignUp() {
                 value={form.aadharPhoto}
                 onChange={handleChange}
                 type="file"
-                className="custom-file"
-
               />
 
               {renderError("aadharPhoto")}
@@ -341,7 +338,6 @@ export default function SignUp() {
                 value={form.panPhoto}
                 onChange={handleChange}
                 type="file"
-                className="custom-file"
               />
 
               {renderError("panPhoto")}
@@ -351,19 +347,9 @@ export default function SignUp() {
           {/* Gender & DOB */}
           <div className="row gx-3 mb-3">
             <div className="col-md-6">
-              <label
-                htmlFor="gender"
-                className={`text-sm text-navy-700 dark:text-white font-bold`}
-              >
-                Gender*
-              </label>
               <select
                 id="gender"
-                className="mt-2 flex h-12 w-full items-center justify-center rounded-xl 
-          border bg-white/0 p-1 outline-none
-          border-gray-200 dark:!border-white/10 dark:text-white
-             // 👉 user class override
-        "
+                className="form-control"
                 value={form.gender}
                 onChange={handleChange}
               >
@@ -418,24 +404,13 @@ export default function SignUp() {
               {renderError("mobile")}
             </div>
             <div className="col-md-6">
-              <div>
+              <div className="flex gap-2">
                 <InputField id="email" label="Email*" value={form.email} onChange={handleChange} />
-
+                <button type="button" onClick={handleEmailVerification} className="bg-blue-500 text-white p-2 rounded">Send OTP</button>
+                <button type="button" onClick={handleOTPVerification} className="bg-green-500 text-white p-2 rounded">Verify OTP</button>
               </div>
-
               {renderError("email")}
             </div>
-
-            <div className="col-md-6">
-              <button type="button" onClick={handleEmailVerification} className="w-full py-2 mt-2 rounded-lg text-white font-medium bg-[#75B61A] hover:bg-green-600">Send OTP</button>
-
-            </div>
-
-            <div className="col-md-6">
-              <button type="button" onClick={handleOTPVerification} className="w-full py-2 mt-2 rounded-lg text-white font-medium bg-[#75B61A] hover:bg-green-600">Verify OTP</button>
-            </div>
-
-
           </div>
 
           {/* Passwords */}
@@ -462,7 +437,7 @@ export default function SignUp() {
 
 
           {/* Additional */}
-          {/* <p className="mb-2 text-base text-gray-600">Additional Details*</p>
+          <p className="mb-2 text-base text-gray-600">Additional Details*</p>
           <div className="row gx-3 mb-3">
             <div className="col-md-6">
               <InputField id="education" label="Education" value={form.education} onChange={handleChange} />
@@ -480,7 +455,7 @@ export default function SignUp() {
               <InputField id="nomineeRelation" label="Nominee Relation*" value={form.nomineeRelation} onChange={handleChange} />
               {renderError("nomineeRelation")}
             </div>
-          </div> */}
+          </div>
 
           {/* Referral */}
           <p className="mb-2 text-base text-gray-600">Referral Code*</p>
