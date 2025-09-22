@@ -27,3 +27,7 @@ input.defaultCheckbox::before {
 input:checked.defaultCheckbox::before { 
 	opacity: 1;
 }
+
+.custom-file{
+	border: none !important;
+}
