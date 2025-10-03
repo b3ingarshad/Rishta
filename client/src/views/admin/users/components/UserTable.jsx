@@ -181,12 +181,24 @@ const UserTable = () => {
         <button onClick={closeModal} className="text-gray-500 hover:text-red-600">&times;</button>
       </div>
       <div className="p-6 max-h-[80vh] overflow-y-auto">
-        <UserForm 
-          initialData={editingUserId ? users.find((u) => u._id === editingUserId) : {}} 
-          onSubmit={handleSaveUser} 
-          isAdmin={true} 
-          loading={loading}
-        />
+       <UserForm 
+  initialData={
+    editingUserId 
+      ? {
+          ...users.find((u) => u._id === editingUserId),
+          dob: users.find((u) => u._id === editingUserId)?.dob 
+            ? new Date(users.find((u) => u._id === editingUserId).dob).toISOString().split("T")[0]
+            : "",
+          referralCode: users.find((u) => u._id === editingUserId)?.referralId || "",
+          sponsorName: users.find((u) => u._id === editingUserId)?.sponsorName || "",
+        }
+      : {}
+  }
+  onSubmit={handleSaveUser}
+  isAdmin={true}
+  loading={loading}
+/>
+
       </div>
     </div>
   </div>

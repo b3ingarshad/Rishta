@@ -18,9 +18,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async ({ email, password }) => {
+  const login = async ({ emailOrMobile, password }) => {
     try {
-      const { data } = await axios.post(`${API_BASE}api/auth/login`, { email, password });
+      const { data } = await axios.post(`${API_BASE}api/auth/login`, { emailOrMobile, password });
       setToken(data.token);
       setUser(data.user);
       localStorage.setItem("token", data.token);

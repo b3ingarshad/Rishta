@@ -8,20 +8,20 @@ import { toast, ToastContainer } from "react-toastify";
 export default function SignIn() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [emailOrMobile, setEmailOrMobile] = useState("");
+const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const { success, role } = await login({ email, password });
-   
+ // handleSubmit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  const { success, role } = await login({ emailOrMobile, password });
 
-    if (!success) {
-    setError("Invalid email or password.");
-    toast.error("Invalid email or password!");
+  if (!success) {
+    setError("Invalid email, mobile, or password.");
+    toast.error("Invalid email, mobile, or password!");
     setLoading(false);
   } else {
     toast.success("Login successful!");
@@ -35,7 +35,7 @@ export default function SignIn() {
       }
     }, 2000);
   }
-  };
+};
 
   return (
     <div className="mt-16 flex h-full w-full items-center px-2">
@@ -45,13 +45,14 @@ export default function SignIn() {
         <p className="mb-6 text-gray-600">Enter your credentials to sign in</p>
 
         <form onSubmit={handleSubmit}>
-          <InputField
-            label="Email"
-            placeholder="Enter email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <InputField
+  label="Email or Mobile"
+  placeholder="Enter email or mobile"
+  type="text"
+  value={emailOrMobile}
+  onChange={(e) => setEmailOrMobile(e.target.value)}
+/>
+
           <InputField
             label="Password"
             placeholder="Enter password"

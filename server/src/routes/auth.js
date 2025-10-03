@@ -82,6 +82,19 @@ router.post('/send-otp', async (req, res) => {
   }
 });
 
+router.get("/referrals/count/:referralId", async (req, res) => {
+  try {
+    const { referralId } = req.params;
+
+    // Count how many users have this referralId as sponsor
+    const count = await User.countDocuments({ referredBy: referralId });
+
+    res.json({ totalReferrals: count });
+  } catch (err) {
+    console.error("Error fetching referral count:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 router.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
@@ -178,10 +191,19 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
 // ------------------ Login ------------------
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'Provide email and password' });
+    const { emailOrMobile, password } = req.body;
+    if (!emailOrMobile || !password) {
+      return res.status(400).json({ message: 'Provide email/mobile and password' });
+    }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // User को email OR mobile से find करो
+    const user = await User.findOne({
+      $or: [
+        { email: emailOrMobile.toLowerCase() },
+        { mobile: emailOrMobile }
+      ]
+    });
+
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -200,8 +222,7 @@ router.post('/login', async (req, res) => {
 });
 
 // ------------------ Admin Add User ------------------
-router.post(
-  '/admin/add-user',
+router.post('/admin/add-user',
   upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]),
   async (req, res) => {
     try {
@@ -226,12 +247,14 @@ router.post(
         return res.status(400).json({ message: 'Email already registered' });
       }
 
-      console.log("Checking existing mobile...");
-      const existingMobile = await User.findOne({ mobile: data.mobile });
-      if (existingMobile) {
-        console.warn("Mobile already registered");
-        return res.status(400).json({ message: 'Mobile number already registered' });
-      }
+      if (data.mobile) {
+  console.log("Checking existing mobile...");
+  const existingMobile = await User.findOne({ mobile: data.mobile });
+  if (existingMobile) {
+    console.warn("Mobile already registered");
+    return res.status(400).json({ message: 'Mobile number already registered' });
+  }
+}
 
       // ------------------ Auto Password ------------------
       const autoPassword = crypto.randomBytes(4).toString('hex');
@@ -324,6 +347,60 @@ router.post(
 
 
 // ------------------ Edit User ------------------
+
+router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    const files = req.files;
+
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update fields (only if provided)
+    if (data.fullName) user.fullName = data.fullName;
+    if (data.email) user.email = data.email;
+    if (data.dob) user.dob = new Date(data.dob);
+    if (data.gender) user.gender = data.gender;
+    if (data.mobile) user.mobile = data.mobile;
+    if (data.address) user.address = data.address;
+    if (data.city) user.city = data.city;
+    if (data.state) user.state = data.state;
+    if (data.pinCode) user.pinCode = data.pinCode;
+    if (data.country) user.country = data.country;
+    if (data.aadharNumber) user.aadharNumber = data.aadharNumber;
+    if (data.panNumber) user.panNumber = data.panNumber;
+    if (data.education) user.education = data.education;
+    if (data.profession) user.profession = data.profession;
+    if (data.nomineeName) user.nomineeName = data.nomineeName;
+    if (data.nomineeRelation) user.nomineeRelation = data.nomineeRelation;
+
+    // Upload new files if provided
+    if (files.aadharPhoto) {
+      const aadharUpload = await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' });
+      user.aadharPhoto = aadharUpload.secure_url;
+    }
+    if (files.panPhoto) {
+      const panUpload = await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' });
+      user.panPhoto = panUpload.secure_url;
+    }
+
+    // ❌ Referral code should NOT be updated in edit
+    // so we skip updating referralId / referredBy
+
+    await user.save();
+
+    const userSafe = user.toObject();
+    delete userSafe.password;
+
+    res.json({ message: "User updated successfully", user: userSafe });
+  } catch (err) {
+    console.error("Error in /edit-user:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
 // ------------------ Register ------------------
 router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
   try {

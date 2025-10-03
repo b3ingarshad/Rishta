@@ -237,7 +237,7 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
         </select> */}
   {/* Referral Section */}
       <div className="mt-4">
-        <InputField id="referralCode" label="Referral Code" value={form.referralCode} onChange={handleReferralChange} />
+        <InputField id="referralCode" label="Referral Code" value={form.referralCode} onChange={handleReferralChange} disabled={!!initialData._id}  />
         {renderError("referralCode")}
         <InputField id="sponsorName" label="Sponsor Name" value={form.sponsorName} disabled />
       </div>
