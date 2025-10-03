@@ -323,13 +323,13 @@ if (form.aadharNumber) {
               {renderError("fullName")}
             </div>
             <div className="col-md-6">
-              <InputField id="aadharNumber" label="Aadhar Card Number*" value={form.aadharNumber} onChange={handleChange} />
+              <InputField id="aadharNumber" label="Aadhar Card Number" value={form.aadharNumber} onChange={handleChange} />
               {renderError("aadharNumber")}
             </div>
             <div className="col-md-6">
               <InputField
                 id="aadharPhoto"
-                label="Aadhar Photo*"
+                label="Aadhar Photo"
                 value={form.aadharPhoto}
                 onChange={handleChange}
                 type="file"
@@ -340,13 +340,13 @@ if (form.aadharNumber) {
               {/* {renderError("aadharPhoto")} */}
             </div>
             <div className="col-md-6">
-              <InputField id="panNumber" label="PAN Number*" value={form.panNumber} onChange={handleChange} />
+              <InputField id="panNumber" label="PAN Number" value={form.panNumber} onChange={handleChange} />
               {renderError("panNumber")}
             </div>
             <div className="col-md-6">
               <InputField
                 id="panPhoto"
-                label="PAN Photo*"
+                label="PAN Photo"
                 value={form.panPhoto}
                 onChange={handleChange}
                 type="file"

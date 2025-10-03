@@ -181,7 +181,7 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
         <InputField id="email" label="Email*" value={form.email} onChange={handleChange} />
         {renderError("email")}
 
-        <InputField id="mobile" label="Mobile Number*" value={form.mobile} onChange={handleChange} />
+        <InputField id="mobile" label="Mobile Number" value={form.mobile} onChange={handleChange} />
         {renderError("mobile")}
 
         {!isAdmin && (
@@ -192,37 +192,37 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
           </>
         )}
 
-        <InputField id="aadharNumber" label="Aadhar Number*" value={form.aadharNumber} onChange={handleChange} />
+        <InputField id="aadharNumber" label="Aadhar Number" value={form.aadharNumber} onChange={handleChange} />
         {renderError("aadharNumber")}
 
         <input type="file" id="aadharPhoto" accept="image/*" onChange={handleChange} className="block w-full mt-2" />
         {/* {renderError("aadharPhoto")} */}
 
-        <InputField id="panNumber" label="PAN Number*" value={form.panNumber} onChange={handleChange} />
+        <InputField id="panNumber" label="PAN Number" value={form.panNumber} onChange={handleChange} />
         {renderError("panNumber")}
 
         <input type="file" id="panPhoto" accept="image/*" onChange={handleChange} className="block w-full mt-2" />
         {/* {renderError("panPhoto")} */}
 
         <select id="gender" value={form.gender} onChange={handleChange} className="form-control w-full p-2 border rounded">
-          <option value="">Select Gender*</option>
+          <option value="">Select Gender</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
           <option value="Other">Other</option>
         </select>
         {/* {renderError("gender")} */}
 
-        <InputField id="dob" type="date" label="Date of Birth*" value={form.dob} onChange={handleChange} />
+        <InputField id="dob" type="date" label="Date of Birth" value={form.dob} onChange={handleChange} />
         {/* {renderError("dob")} */}
         {renderError("ageCheck")}
 
-        <InputField id="pinCode" label="Pin Code*" value={form.pinCode} onChange={handlePincodeChange} />
+        <InputField id="pinCode" label="Pin Code" value={form.pinCode} onChange={handlePincodeChange} />
         {/* {renderError("pinCode")} */}
 
-        <InputField id="city" label="City*" value={form.city} disabled={locationLocked} />
+        <InputField id="city" label="City" value={form.city} disabled={locationLocked} />
         {/* {renderError("city")} */}
 
-        <InputField id="state" label="State*" value={form.state} disabled={locationLocked} />
+        <InputField id="state" label="State" value={form.state} disabled={locationLocked} />
         {/* {renderError("state")} */}
 
         <TextField id="address" label="Address*" value={form.address} onChange={handleChange} />
