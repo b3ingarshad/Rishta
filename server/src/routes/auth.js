@@ -115,7 +115,7 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
     const data = req.body;
     const files = req.files;
 
-    if (!data.email || !data.password || !data.fullName || !data.aadharNumber) {
+    if (!data.email || !data.password || !data.fullName) {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
@@ -156,7 +156,7 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
       nomineeRelation: data.nomineeRelation,
       role: data.role && data.role === 'admin' ? 'admin' : 'user',
       referralId,
-      sponsorName: data.sponsorName || '',
+      sponsorName: data.sponsorName || user.sponsorName || "Mohammad Abbas Noorani",
       referredBy: data.referralCode || ''
     });
 
@@ -213,7 +213,7 @@ router.post(
       const files = req.files;
 
       // ------------------ Required Fields ------------------
-      if (!data.email || !data.fullName || !data.aadharNumber) {
+      if (!data.email || !data.fullName ) {
         console.warn("Missing required fields");
         return res.status(400).json({ message: "Full Name, Email & Aadhar are required" });
       }
@@ -285,8 +285,8 @@ router.post(
         nomineeRelation: data.nomineeRelation,
         role: 'user',
         referralId,
-        sponsorName: "Rishta Matrimonial",
-        referredBy: "REFRM11RM1R"
+        sponsorName: data.sponsorName ? data.sponsorName : "Mohammad Abbas Noorani",
+        referredBy:  data.referralCode ? data.referralCode : "REF1IBDUNDO"
       });
 
       await user.save();
@@ -324,51 +324,86 @@ router.post(
 
 
 // ------------------ Edit User ------------------
-router.put('/admin/edit-user/:id', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
+// ------------------ Register ------------------
+router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPhoto' }]), async (req, res) => {
   try {
-    const userId = req.params.id;
     const data = req.body;
     const files = req.files;
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (data.email) {
-      const existingEmail = await User.findOne({ email: data.email.toLowerCase(), _id: { $ne: userId } });
-      if (existingEmail) return res.status(400).json({ message: 'Email already in use' });
-    }
-    if (data.mobile) {
-      const existingMobile = await User.findOne({ mobile: data.mobile, _id: { $ne: userId } });
-      if (existingMobile) return res.status(400).json({ message: 'Mobile already in use' });
+    if (!data.email || !data.password || !data.fullName) {
+      return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    user.fullName = data.fullName || user.fullName;
-    user.dob = data.dob ? new Date(data.dob) : user.dob;
-    user.gender = data.gender || user.gender;
-    user.mobile = data.mobile || user.mobile;
-    user.address = data.address || user.address;
-    user.country = data.country || user.country;
-    user.city = data.city || user.city;
-    user.state = data.state || user.state;
-    user.pinCode = data.pinCode || user.pinCode;
-    user.aadharNumber = data.aadharNumber || user.aadharNumber;
-    user.panNumber = data.panNumber || user.panNumber;
-    user.aadharPhoto = files.aadharPhoto ? (await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' })).secure_url : user.aadharPhoto;
-    user.panPhoto = files.panPhoto ? (await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' })).secure_url : user.panPhoto;
-    user.email = data.email ? data.email.toLowerCase() : user.email;
-    user.education = data.education || user.education;
-    user.profession = data.profession || user.profession;
-    user.nomineeName = data.nomineeName || user.nomineeName;
-    user.nomineeRelation = data.nomineeRelation || user.nomineeRelation;
-    user.sponsorName = data.sponsorName || user.sponsorName || "Rishta Matrimonial";
-    user.referredBy = data.referredBy || user.referredBy || "REFRM11RM1R";
+    const existingEmail = await User.findOne({ email: data.email.toLowerCase() });
+    if (existingEmail) return res.status(400).json({ message: 'Email already registered' });
+
+    const existingMobile = await User.findOne({ mobile: data.mobile });
+    if (existingMobile) return res.status(400).json({ message: 'Mobile number already registered' });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(data.password, salt);
+
+    const referralId = await generateReferralId();
+
+    const aadharUpload = files.aadharPhoto ? await cloudinary.uploader.upload(files.aadharPhoto[0].path, { folder: 'rishta-users' }) : null;
+    const panUpload = files.panPhoto ? await cloudinary.uploader.upload(files.panPhoto[0].path, { folder: 'rishta-users' }) : null;
+
+    // ✅ sponsorName/referralCode logic
+    let sponsorName = data.sponsorName?.trim();
+    let referredBy = data.referralCode?.trim();
+
+    if (!sponsorName && referredBy) {
+      // agar referralCode diya hai to sponsor fetch karo
+      const sponsorUser = await User.findOne({ referralId: referredBy });
+      sponsorName = sponsorUser ? sponsorUser.fullName : "";
+    }
+
+    if (!sponsorName && !referredBy) {
+      // agar kuch nahi diya to default values
+      sponsorName = "Mohammad Abbas Noorani";
+      referredBy = "REF1IBDUNDO";
+    }
+
+    const user = new User({
+      fullName: data.fullName,
+      dob: data.dob ? new Date(data.dob) : null,
+      gender: data.gender,
+      mobile: data.mobile,
+      address: data.address,
+      country: data.country || 'India',
+      city: data.city,
+      state: data.state,
+      pinCode: data.pinCode,
+      aadharNumber: data.aadharNumber,
+      panNumber: data.panNumber,
+      aadharPhoto: aadharUpload ? aadharUpload.secure_url : "",
+      panPhoto: panUpload ? panUpload.secure_url : "",
+      email: data.email.toLowerCase(),
+      password: hashed,
+      education: data.education,
+      profession: data.profession,
+      nomineeName: data.nomineeName,
+      nomineeRelation: data.nomineeRelation,
+      role: data.role && data.role === 'admin' ? 'admin' : 'user',
+      referralId,
+      sponsorName,
+      referredBy
+    });
 
     await user.save();
-    res.json({ message: "User updated successfully" });
+
+    const payload = { userId: user._id, role: user.role };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+
+    const userSafe = user.toObject();
+    delete userSafe.password;
+
+    res.status(201).json({ token, user: userSafe });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
   
 module.exports = router;

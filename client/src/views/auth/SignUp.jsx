@@ -221,12 +221,21 @@ export default function SignUp() {
     if (!form.pinCode) errors.pinCode = "Pin Code is required";
     if (!form.state) errors.state = "State is required";
     if (!form.city) errors.city = "City is required";
+if (form.aadharNumber) {
+    if (!/^\d{12}$/.test(form.aadharNumber)) {
+      errors.aadharNumber = "Aadhar must be 12 digits";
+    }
+  }
+  if (form.panNumber) {
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.panNumber)) {
+      errors.panNumber = "Invalid PAN format";
+    }
+  }
+    // if (!form.aadharNumber) errors.aadharNumber = "Aadhar number is required";
+    // if (!form.panNumber) errors.panNumber = "PAN number is required";
 
-    if (!form.aadharNumber) errors.aadharNumber = "Aadhar number is required";
-    if (!form.panNumber) errors.panNumber = "PAN number is required";
-
-    if (!form.aadharPhoto) errors.aadharPhoto = "Aadhar photo is required";
-    if (!form.panPhoto) errors.panPhoto = "PAN photo is required";
+    // if (!form.aadharPhoto) errors.aadharPhoto = "Aadhar photo is required";
+    // if (!form.panPhoto) errors.panPhoto = "PAN photo is required";
 
     if (!form.mobile) errors.mobile = "Mobile number is required";
     else if (!/^\d{10}$/.test(form.mobile))
@@ -266,8 +275,8 @@ export default function SignUp() {
 
     // Default referral if empty
     if (!form.referralCode) {
-      form.referralCode = "REFRM11RM1R";
-      form.sponsorName = "Rishta Matrimonial";
+      form.referralCode = "REF1IBDUNDO";
+      form.sponsorName = "Mohammad Abbas Noorani";
     }
 
     if (!validateForm()) {
@@ -328,7 +337,7 @@ export default function SignUp() {
 
               />
 
-              {renderError("aadharPhoto")}
+              {/* {renderError("aadharPhoto")} */}
             </div>
             <div className="col-md-6">
               <InputField id="panNumber" label="PAN Number*" value={form.panNumber} onChange={handleChange} />
@@ -344,7 +353,7 @@ export default function SignUp() {
                 className="custom-file"
               />
 
-              {renderError("panPhoto")}
+              {/* {renderError("panPhoto")} */}
             </div>
           </div>
 

@@ -10,7 +10,7 @@ const Referrals = () => {
 
   // WhatsApp share
   const shareOnWhatsApp = () => {
-    const message = `Hey! Join this awesome platform using my referral ID: ${referralId}. Click here: ${referralLink}`;
+    const message = `Get ₹400 per friend you refer to RishtaForYou & potential earning upto ₹40Cr! Share: ${referralLink} #RishtaForYou`;
     const whatsappUrl = isMobile
       ? `https://wa.me/?text=${encodeURIComponent(message)}`
       : `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
@@ -20,7 +20,8 @@ const Referrals = () => {
   // Gmail share
   const shareOnGmail = () => {
     const subject = "Join this platform using my Referral ID";
-    const body = `Hey!\n\nUse my referral ID: ${referralId} to sign up.\nClick here to join: ${referralLink}`;
+    const body = `
+    Get ₹400 per friend you refer to RishtaForYou & potential earning upto ₹40Cr! Share: ${referralLink} #RishtaForYou`;
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;
