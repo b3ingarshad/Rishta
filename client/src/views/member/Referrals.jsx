@@ -42,22 +42,22 @@ const Referrals = () => {
       <div className="bg-white p-5 rounded-2xl shadow mb-6">
         <h3 className="font-semibold mb-3">Your Referral ID</h3>
         <p className="text-lg font-bold mb-2">{referralId || "No Referral ID"}</p>
-        <div className="flex gap-3">
+        <div className="d-flex flex-wrap gap-3">
           <button
             onClick={shareOnWhatsApp}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            className="py-1 py-md-2 px-2 px-md-4 flex-grow-1 flex-md-grow-0 bg-green-500 text-white rounded-lg hover:bg-green-600"
           >
             Share on WhatsApp
           </button>
           <button
             onClick={shareOnGmail}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            className="py-1 py-md-2 px-2 px-md-4 flex-grow-1 flex-md-grow-0 bg-red-500 text-white rounded-lg hover:bg-red-600"
           >
             Share on Gmail
           </button>
           <button
             onClick={copyReferralLink}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            className="py-1 py-md-2 px-2 px-md-4 flex-grow-1 flex-md-grow-0 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
           >
             Copy Link
           </button>
