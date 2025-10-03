@@ -322,7 +322,7 @@ if (form.aadharNumber) {
               <InputField id="fullName" label="Full Name (as per Aadhar Card)*" value={form.fullName} onChange={handleChange} />
               {renderError("fullName")}
             </div>
-            <div className="col-md-6">
+            {/* <div className="col-md-6">
               <InputField id="aadharNumber" label="Aadhar Card Number" value={form.aadharNumber} onChange={handleChange} />
               {renderError("aadharNumber")}
             </div>
@@ -337,7 +337,6 @@ if (form.aadharNumber) {
 
               />
 
-              {/* {renderError("aadharPhoto")} */}
             </div>
             <div className="col-md-6">
               <InputField id="panNumber" label="PAN Number" value={form.panNumber} onChange={handleChange} />
@@ -353,8 +352,7 @@ if (form.aadharNumber) {
                 className="custom-file"
               />
 
-              {/* {renderError("panPhoto")} */}
-            </div>
+            </div> */}
           </div>
 
           {/* Gender & DOB */}
