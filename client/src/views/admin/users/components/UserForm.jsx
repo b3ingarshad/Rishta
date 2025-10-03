@@ -192,17 +192,17 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
           </>
         )}
 
-        <InputField id="aadharNumber" label="Aadhar Number" value={form.aadharNumber} onChange={handleChange} />
+        {/* <InputField id="aadharNumber" label="Aadhar Number" value={form.aadharNumber} onChange={handleChange} />
         {renderError("aadharNumber")}
 
         <input type="file" id="aadharPhoto" accept="image/*" onChange={handleChange} className="block w-full mt-2" />
-        {/* {renderError("aadharPhoto")} */}
+       
 
         <InputField id="panNumber" label="PAN Number" value={form.panNumber} onChange={handleChange} />
         {renderError("panNumber")}
 
-        <input type="file" id="panPhoto" accept="image/*" onChange={handleChange} className="block w-full mt-2" />
-        {/* {renderError("panPhoto")} */}
+        <input type="file" id="panPhoto" accept="image/*" onChange={handleChange} className="block w-full mt-2" /> */}
+       
 
         <select id="gender" value={form.gender} onChange={handleChange} className="form-control w-full p-2 border rounded">
           <option value="">Select Gender</option>
