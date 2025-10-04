@@ -56,16 +56,16 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
               state: data[0].PostOffice[0].State,
               city: data[0].PostOffice[0].District,
             }));
-            setLocationLocked(true);
+            // setLocationLocked(true);
             toast.success("State & City autofilled!");
           } else {
             setForm((prev) => ({ ...prev, state: "", city: "" }));
-            setLocationLocked(false);
+            // setLocationLocked(false);
             toast.error("Invalid Pincode");
           }
         } catch {
           setForm((prev) => ({ ...prev, state: "", city: "" }));
-          setLocationLocked(false);
+          // setLocationLocked(false);
           toast.error("Failed to fetch location");
         }
       }
@@ -219,10 +219,17 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
         <InputField id="pinCode" label="Pin Code" value={form.pinCode} onChange={handlePincodeChange} />
         {/* {renderError("pinCode")} */}
 
-        <InputField id="city" label="City" value={form.city} disabled={locationLocked} />
+        <InputField id="city" label="City" value={form.city} 
+        // disabled={locationLocked}
+        onChange={handleChange}
+         />
         {/* {renderError("city")} */}
 
-        <InputField id="state" label="State" value={form.state} disabled={locationLocked} />
+        <InputField id="state" label="State" value={form.state}
+        //  disabled={locationLocked} 
+        onChange={handleChange}
+         
+         />
         {/* {renderError("state")} */}
 
         <TextField id="address" label="Address*" value={form.address} onChange={handleChange} />

@@ -148,7 +148,7 @@ export default function SignUp() {
             state,
             city,
           }));
-          setLocationLocked(true);
+          // setLocationLocked(true);
           toast.success("State & City autofilled!");
         } else {
           // Invalid Pincode → Clear state & city
@@ -157,7 +157,7 @@ export default function SignUp() {
             state: "",
             city: "",
           }));
-          setLocationLocked(false);
+          // setLocationLocked(false);
           toast.error("Invalid Pincode");
         }
       } catch (err) {
@@ -168,7 +168,7 @@ export default function SignUp() {
           state: "",
           city: "",
         }));
-        setLocationLocked(false);
+        // setLocationLocked(false);
         toast.error("Failed to fetch location");
       }
     } else {
@@ -178,7 +178,7 @@ export default function SignUp() {
         state: "",
         city: "",
       }));
-      setLocationLocked(false);
+      // setLocationLocked(false);
     }
   };
 
@@ -409,11 +409,17 @@ if (form.aadharNumber) {
           {/* State & City */}
           <div className="row gx-3 mb-3">
             <div className="col-md-6">
-              <InputField id="state" label="State*" value={form.state} disabled={locationLocked} />
+              <InputField id="state" label="State*" value={form.state} 
+               onChange={handleChange}
+              //  disabled={locationLocked} 
+               />
               {renderError("state")}
             </div>
             <div className="col-md-6">
-              <InputField id="city" label="City*" value={form.city} disabled={locationLocked} />
+              <InputField id="city" label="City*" value={form.city} 
+              // disabled={locationLocked}
+               onChange={handleChange}
+               />
               {renderError("city")}
             </div>
           </div>

@@ -58,7 +58,7 @@ router.post('/send-otp', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email required" });
 
-  
+
 
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) return res.status(400).json({ message: 'Email already registered' });
@@ -234,7 +234,7 @@ router.post('/admin/add-user',
       const files = req.files;
 
       // ------------------ Required Fields ------------------
-      if (!data.email || !data.fullName ) {
+      if (!data.email || !data.fullName) {
         console.warn("Missing required fields");
         return res.status(400).json({ message: "Full Name, Email & Aadhar are required" });
       }
@@ -248,13 +248,13 @@ router.post('/admin/add-user',
       }
 
       if (data.mobile) {
-  console.log("Checking existing mobile...");
-  const existingMobile = await User.findOne({ mobile: data.mobile });
-  if (existingMobile) {
-    console.warn("Mobile already registered");
-    return res.status(400).json({ message: 'Mobile number already registered' });
-  }
-}
+        console.log("Checking existing mobile...");
+        const existingMobile = await User.findOne({ mobile: data.mobile });
+        if (existingMobile) {
+          console.warn("Mobile already registered");
+          return res.status(400).json({ message: 'Mobile number already registered' });
+        }
+      }
 
       // ------------------ Auto Password ------------------
       const autoPassword = crypto.randomBytes(4).toString('hex');
@@ -309,7 +309,7 @@ router.post('/admin/add-user',
         role: 'user',
         referralId,
         sponsorName: data.sponsorName ? data.sponsorName : "Mohammad Abbas Noorani",
-        referredBy:  data.referralCode ? data.referralCode : "REF1IBDUNDO"
+        referredBy: data.referralCode ? data.referralCode : "REF1IBDUNDO"
       });
 
       await user.save();
@@ -321,14 +321,36 @@ router.post('/admin/add-user',
           await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: data.email,
-            subject: 'Your Account Details',
-            text: `Hello ${data.fullName},\n\nYour account has been created successfully.\n\nEmail: ${data.email}\nPassword: ${autoPassword}\n\nPlease change your password after login.`
+            subject: "Welcome to RishtaForYou Referral Program",
+            text: `Hi ${data.fullName},
+
+Welcome to the RishtaForYou Referral Program! You’re now part of our mission to spread love and earn rewards. 
+
+Share your unique referral link and earn ₹400 per direct referral and potential income is up to ₹40 crores through indirect referrals across 10 levels!
+
+Get Started:
+
+Sign in here: https://rishta-lake.vercel.app/auth/sign-in
+Login: ${data.email || data.mobile}
+Password: ${autoPassword}
+
+Access your referral link and share it with friends and family.
+Earn rewards for every successful membership signup!
+
+Let’s create rishtas and build your earnings together. 
+
+For any questions, contact us at support@rishtaforyou.com or call us: +91 9375007734
+
+Warm regards,
+Team RishtaForYou
+www.rishtaforyou.com`
           });
-          console.log("Email sent successfully");
+          console.log("Referral Program Email sent successfully");
         }
       } catch (emailErr) {
         console.warn("Email not sent:", emailErr.message);
       }
+
 
       res.status(201).json({ message: "User created successfully", autoPassword });
 
@@ -482,5 +504,5 @@ router.post('/register', upload.fields([{ name: 'aadharPhoto' }, { name: 'panPho
   }
 });
 
-  
+
 module.exports = router;
